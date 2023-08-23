@@ -19,7 +19,7 @@ import static org.hamcrest.Matchers.*;
 
 public class AppTest {
 
-    private static final HashMap<String,String> header = new HashMap<String, String>();
+    static final HashMap<String,String> header = new HashMap<String, String>();
 
     @BeforeClass
     public static void  carregarConfig(){
@@ -29,28 +29,38 @@ public class AppTest {
 
     @Test
     public void deveRetornarImagemEspecifica(){
-        given() //dado
-        .when()
-                .get(baseURI+EndPoint.images+ Respostas.idImagem)
-        .then()
-                .log().all()
-                .assertThat()
-                .statusCode(200)
-                .body(AtributosJson.url, is(Respostas.enderecoComIdImagem))
-        ;
+        Response retornaImagem = imagemEspecifica();
+        Assert.assertEquals(retornaImagem.jsonPath().getString("url"),"https://cdn2.thecatapi.com/images/9ab.jpg");
+        Assert.assertEquals(retornaImagem.jsonPath().getString("id"),"9ab");
+
     }
+    private Response imagemEspecifica(){
+       Response response=
+
+           given()
+           .when()
+                .get(baseURI+EndPoint.images+ Respostas.idImagem)
+           .then()
+                .extract().response();
+        return response;
+    }
+
+
     @Test
     public void deveRetornar10ImagensQuandoRequisitarParametroLimit(){
-        given()
+
+               given()
                 .param(AtributosJson.limit,10)
         .when()
                 .get(baseURI+EndPoint.imagesSeach+Respostas.limiteDeImagens)
+
         .then()
                 .log().all()
                 .assertThat()
                 .body(Respostas.size,is(10))
         ;
     }
+
     @Test
     public void deveRealizarUmVotoValidoEmUmaImagem(){
         Response votoCriado = gerarVoto();
@@ -64,8 +74,9 @@ public class AppTest {
         Response votoCriado = gerarVoto();
 
         String id = votoCriado.jsonPath().getString(Respostas.id);
+
         given()
-                .headers(AppTest.header)
+                .headers(AppTest.header)//token
         .when()
                 .delete(baseURI+EndPoint.votes+"/" +id)
         .then()
@@ -80,7 +91,7 @@ public class AppTest {
                 given()
                     .headers(AppTest.header)
                     .contentType(ContentType.JSON)
-                    .body(gerarCorpoVoto())//vira texto com toString
+                    .body(gerarCorpoVoto())
                 .when()
                     .post(baseURI+EndPoint.votes)
                 .then()
@@ -88,10 +99,11 @@ public class AppTest {
         return response;
     }
     public String gerarCorpoVoto(){
-        JSONObject voto = new JSONObject();
-        voto.put(AtributosJson.imageId, Respostas.codigo);
-        voto.put(AtributosJson.value,1);
+        JSONObject corpoVoto = new JSONObject();
+        corpoVoto.put(AtributosJson.imageId, Respostas.codigo);
+        corpoVoto.put(AtributosJson.value,1);
 
-        return voto.toString();
+        return corpoVoto.toString();
     }
+
 }
